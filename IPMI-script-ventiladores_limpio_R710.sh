@@ -87,7 +87,6 @@ Max_pasos=$(($Vel_maxima / $D_rpm))
 #	- E_fallo (hay un ventilador fallando).
 function velocidad_ventiladores {
 	bien=0
-#	echo $N_Vent
 	if [ -f $Fich_temp ];
 	then
 		rm $Fich_temp
@@ -100,16 +99,13 @@ function velocidad_ventiladores {
 	else
 		i=0
 		while read -r linea; do
-#			echo "Linea - $line"
 			vent_ok[$i]=`echo $linea |cut -s -d '|' -f 3 |xargs`
 			vent_rpm[$i]=`echo $linea |cut -s -d '|' -f 5 |cut -d ' ' -f 2 |xargs`
-#			echo "status: ${vent_ok[$i]}  RPM: ${vent_rpm[$i]}"
 			((i++))
 		done < $Fich_temp
 		rpm_suma=0
 		for i in "${vent_ok[@]}";
 		do
-#			echo "status: ${vent_ok[$i]}  RPM: ${vent_rpm[$i]}"
 			if [ "${vent_ok[$i]}" == "ok" ];
 			then
 				rpm_suma=$(($rpm_suma + ${vent_rpm[$i]}))
@@ -117,7 +113,6 @@ function velocidad_ventiladores {
 				salida_funcion="E_fallo"
 			fi
 		done
-#		echo $rpm_suma
 		rpm_media=$(($rpm_suma / ${#vent_ok[@]}))
 		if [ "$salida_funcion" != "E_fallo" ];
 		then
@@ -146,8 +141,6 @@ A_Temp=$(ipmitool -I lanplus -H $Host_IPMI -U $User_IPMI -P $Passw_IPMI -y $EncK
 
 # Calculamos la temperatura a la que aumentaríamos la velocidad de los ventiladores.
 A_Temp_Cambio=$(($A_Temp_Deseada + $Hist))
-
-#A_Temp=36
 
 if [[ $A_Temp > $Max_A_Temp ]];
 then
@@ -180,7 +173,6 @@ else
 	then
 		#cogemos valor de ventiladores y calculamos hexadecimal para reducir la velocidad tantos pasos como la diferencia en grados.
 		velocidad=$(velocidad_ventiladores)
-#		echo "Velocidad medida: $velocidad"
 		case $velocidad in
 			E_numero)
 				printf "Error: Se han leído un número distinto de líneas de ventilador de las esperadas. Salimos!" | systemd-cat -t Script_Vent_R710
@@ -193,9 +185,7 @@ else
 				exit -1
 			;;
 			*)
-#				echo "Diferencia= $(($velocidad - $Vel_minima))"
 				pasos=$(( $(($velocidad - $Vel_minima)) / $D_rpm))
-#				echo "Pasos= $pasos"
 				if [ $(($pasos - $D_pasos)) -le 0 ];
 				then
 					pasos=0
@@ -203,7 +193,6 @@ else
 					pasos=$(($pasos - $D_pasos))
 				fi
 				pasos_hex=`printf "0x%02x" $pasos`
-#				echo $pasos_hex
 				ipmitool -I lanplus -H $Host_IPMI -U $User_IPMI -P $Passw_IPMI -y $EncKey_IPMI raw 0x30 0x30 0x02 0xff $pasos_hex
 			;;
 		esac
@@ -215,7 +204,6 @@ else
 		then
 			#cogemos valor de ventiladores y calculamos hexadecimal para aumentar la velocidad tantos pasos como la diferencia en grados.
 			velocidad=$(velocidad_ventiladores)
-#			echo "Velocidad medida: $velocidad"
 			case $velocidad in
 				E_numero)
 					printf "Error: Se han leído un número distinto de líneas de ventilador de las esperadas. Salimos!" | systemd-cat -t Script_Vent_R710
@@ -228,9 +216,7 @@ else
 					exit -1
 				;;
 				*)
-#					echo "Diferencia= $(($velocidad - $Vel_minima))"
 					pasos=$(( $(($velocidad - $Vel_minima)) / $D_rpm))
-#					echo "Pasos= $pasos"
 					if [ $(($pasos + $D_pasos)) -ge $(($Max_pasos)) ];
 					then
 						pasos=$Max_pasos
@@ -238,7 +224,6 @@ else
 						pasos=$(($pasos + $D_pasos))
 					fi
 					pasos_hex=`printf "0x%02x" $pasos`
-#					echo $pasos_hex
 					ipmitool -I lanplus -H $Host_IPMI -U $User_IPMI -P $Passw_IPMI -y $EncKey_IPMI raw 0x30 0x30 0x02 0xff $pasos_hex
 				;;
 			esac
